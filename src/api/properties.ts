@@ -1,6 +1,14 @@
 import type { Property, PropertyDetail } from "@/types/property"
 import { apiFetch } from "@/api/client"
 
+export type PropertySort =
+  | "newest"
+  | "oldest"
+  | "price-asc"
+  | "price-desc"
+  | "rating-desc"
+  | "rating-asc"
+
 export type PropertyQueryParams = {
   search?: string
   type?: Property["type"]
@@ -8,6 +16,7 @@ export type PropertyQueryParams = {
   minPrice?: string
   maxPrice?: string
   minRating?: string
+  sort?: PropertySort
   page?: number
   limit?: number
 }
@@ -51,6 +60,10 @@ function buildPropertyQuery(params: PropertyQueryParams = {}) {
 
   if (params.minRating?.trim()) {
     searchParams.set("minRating", params.minRating.trim())
+  }
+
+  if (params.sort) {
+    searchParams.set("sort", params.sort)
   }
 
   if (params.page) {

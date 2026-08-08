@@ -8,12 +8,14 @@ import {
   Warehouse,
   Hotel,
   X,
+  ArrowUpDown,
   type LucideIcon,
 } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { Property } from "@/types/property"
+import type { PropertySort } from "@/api/properties"
 
 interface Category {
   label: Property["type"] | "All"
@@ -28,6 +30,26 @@ const categories: Category[] = [
   { label: "Hotel", icon: Hotel },
 ]
 
+const validSorts: PropertySort[] = [
+  "newest",
+  "oldest",
+  "price-asc",
+  "price-desc",
+  "rating-desc",
+  "rating-asc",
+]
+
+function getCurrentSort(value: string | null): PropertySort {
+  if (
+    value &&
+    validSorts.includes(value as PropertySort)
+  ) {
+    return value as PropertySort
+  }
+
+  return "newest"
+}
+
 export function SearchFilters() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -38,12 +60,16 @@ export function SearchFilters() {
   const currentMinPrice = searchParams.get("minPrice") ?? ""
   const currentMaxPrice = searchParams.get("maxPrice") ?? ""
   const currentMinRating = searchParams.get("minRating") ?? ""
+  const currentSort = getCurrentSort(
+    searchParams.get("sort")
+  )
 
   const [search, setSearch] = useState(currentSearch)
   const [city, setCity] = useState(currentCity)
   const [minPrice, setMinPrice] = useState(currentMinPrice)
   const [maxPrice, setMaxPrice] = useState(currentMaxPrice)
-  const [minRating, setMinRating] = useState(currentMinRating)
+  const [minRating, setMinRating] =
+    useState(currentMinRating)
 
   useEffect(() => {
     setSearch(currentSearch)
@@ -102,6 +128,21 @@ export function SearchFilters() {
       nextParams.delete("type")
     } else {
       nextParams.set("type", category)
+    }
+
+    nextParams.delete("page")
+
+    setSearchParams(nextParams)
+  }
+
+  function handleSortChange(value: string) {
+    const sort = getCurrentSort(value)
+    const nextParams = new URLSearchParams(searchParams)
+
+    if (sort === "newest") {
+      nextParams.delete("sort")
+    } else {
+      nextParams.set("sort", sort)
     }
 
     nextParams.delete("page")
@@ -183,25 +224,73 @@ export function SearchFilters() {
           </Button>
         </div>
 
-        {/* Category tabs */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {categories.map(({ label, icon: Icon }) => (
-            <Button
-              key={label}
-              type="button"
-              size="sm"
-              variant={
-                activeCategory === label
-                  ? "default"
-                  : "outline"
-              }
-              className="gap-1.5 rounded-full"
-              onClick={() => handleCategoryChange(label)}
+        {/* Categories + Sort */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {categories.map(({ label, icon: Icon }) => (
+              <Button
+                key={label}
+                type="button"
+                size="sm"
+                variant={
+                  activeCategory === label
+                    ? "default"
+                    : "outline"
+                }
+                className="gap-1.5 rounded-full"
+                onClick={() =>
+                  handleCategoryChange(label)
+                }
+              >
+                {Icon && <Icon className="h-4 w-4" />}
+                {label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-gray-500" />
+
+            <label
+              htmlFor="property-sort"
+              className="text-sm font-medium text-gray-600"
             >
-              {Icon && <Icon className="h-4 w-4" />}
-              {label}
-            </Button>
-          ))}
+              Sort
+            </label>
+
+            <select
+              id="property-sort"
+              value={currentSort}
+              onChange={(e) =>
+                handleSortChange(e.target.value)
+              }
+              className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700"
+            >
+              <option value="newest">
+                Newest
+              </option>
+
+              <option value="oldest">
+                Oldest
+              </option>
+
+              <option value="price-asc">
+                Price: Low to High
+              </option>
+
+              <option value="price-desc">
+                Price: High to Low
+              </option>
+
+              <option value="rating-desc">
+                Rating: High to Low
+              </option>
+
+              <option value="rating-asc">
+                Rating: Low to High
+              </option>
+            </select>
+          </div>
         </div>
 
         {/* Advanced filters */}
@@ -253,7 +342,9 @@ export function SearchFilters() {
                   id="city-filter"
                   value={city}
                   placeholder="e.g. Colombo"
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) =>
+                    setCity(e.target.value)
+                  }
                 />
               </div>
 
@@ -272,7 +363,9 @@ export function SearchFilters() {
                   min="0"
                   value={minPrice}
                   placeholder="Min price"
-                  onChange={(e) => setMinPrice(e.target.value)}
+                  onChange={(e) =>
+                    setMinPrice(e.target.value)
+                  }
                 />
               </div>
 
@@ -291,7 +384,9 @@ export function SearchFilters() {
                   min="0"
                   value={maxPrice}
                   placeholder="Max price"
-                  onChange={(e) => setMaxPrice(e.target.value)}
+                  onChange={(e) =>
+                    setMaxPrice(e.target.value)
+                  }
                 />
               </div>
 
@@ -312,12 +407,24 @@ export function SearchFilters() {
                   }
                   className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"
                 >
-                  <option value="">Any rating</option>
-                  <option value="1">1+ stars</option>
-                  <option value="2">2+ stars</option>
-                  <option value="3">3+ stars</option>
-                  <option value="4">4+ stars</option>
-                  <option value="4.5">4.5+ stars</option>
+                  <option value="">
+                    Any rating
+                  </option>
+                  <option value="1">
+                    1+ stars
+                  </option>
+                  <option value="2">
+                    2+ stars
+                  </option>
+                  <option value="3">
+                    3+ stars
+                  </option>
+                  <option value="4">
+                    4+ stars
+                  </option>
+                  <option value="4.5">
+                    4.5+ stars
+                  </option>
                 </select>
               </div>
             </div>
