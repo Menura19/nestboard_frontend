@@ -43,6 +43,33 @@ export type Booking = {
   }
 }
 
+type ApiBooking = {
+  id: string
+  bookingStatus?: string
+  status?: string
+  leaseStart?: string
+  startMonth?: string
+  durationMonths: number
+  seatNumber: number
+  totalAmount?: number | string
+  totalPrice?: number | string
+  room?: Booking["room"]
+}
+
+function normalizeBooking(booking: ApiBooking): Booking {
+  const start = booking.startMonth ?? booking.leaseStart ?? ""
+
+  return {
+    id: booking.id,
+    status: booking.status ?? booking.bookingStatus ?? "PENDING",
+    startMonth: start ? start.slice(0, 7) : "Not specified",
+    durationMonths: booking.durationMonths,
+    seatNumber: booking.seatNumber,
+    totalPrice: booking.totalPrice ?? booking.totalAmount,
+    room: booking.room,
+  }
+}
+
 async function readApiError(response: Response, fallback: string) {
   try {
     const body = await response.json()
@@ -90,7 +117,7 @@ export async function createConfirmedBooking(input: {
     throw new Error(await readApiError(response, "Failed to create booking"))
   }
 
-  return response.json()
+  return normalizeBooking(await response.json())
 }
 
 export async function fetchMyBookings(): Promise<Booking[]> {
@@ -101,5 +128,6 @@ export async function fetchMyBookings(): Promise<Booking[]> {
   }
 
   const body = await response.json()
-  return Array.isArray(body) ? body : body.data ?? []
+  const bookings: ApiBooking[] = Array.isArray(body) ? body : body.data ?? []
+  return bookings.map(normalizeBooking)
 }
