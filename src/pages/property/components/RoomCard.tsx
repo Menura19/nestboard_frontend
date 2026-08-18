@@ -4,16 +4,24 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { Room } from "@/types/property"
 
+type RoomCardProps = Room & {
+  onViewRooms?: (room: Room) => void
+}
+
 export function RoomCard({
+  id,
   name,
   price,
   seatsTotal,
   seatsFree,
   hasAC,
-}: Room) {
-  const fillPercentage = Math.round(
-    ((seatsTotal - seatsFree) / seatsTotal) * 100
-  )
+  onViewRooms,
+}: RoomCardProps) {
+  const room = { id, name, price, seatsTotal, seatsFree, hasAC }
+  const fillPercentage =
+    seatsTotal > 0
+      ? Math.round(((seatsTotal - seatsFree) / seatsTotal) * 100)
+      : 0
 
   return (
     <Card className="gap-0 rounded-2xl p-4 ring-1 ring-foreground/10 transition-all">
@@ -41,9 +49,14 @@ export function RoomCard({
         />
       </div>
 
-      <Button className="mt-4 w-full rounded-xl font-semibold cursor-pointer" size="lg">
-        View Rooms
-        <ArrowRight className="size-4" />
+      <Button
+        className="mt-4 w-full cursor-pointer rounded-xl font-semibold"
+        size="lg"
+        disabled={seatsFree <= 0}
+        onClick={() => onViewRooms?.(room)}
+      >
+        {seatsFree > 0 ? "View Rooms" : "Fully booked"}
+        {seatsFree > 0 && <ArrowRight className="size-4" />}
       </Button>
     </Card>
   )

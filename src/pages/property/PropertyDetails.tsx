@@ -1,12 +1,15 @@
+import { useState } from "react"
 import { useParams } from "react-router"
 import { PropertySection } from "./components/PropertySection"
 import { PropertyInfo } from "./components/PropertyInfo"
 import { RoomList } from "./components/RoomList"
+import { BookingPanel } from "./components/BookingPanel"
 import { usePropertyDetail } from "@/hooks/usePropertyDetail"
+import type { Room } from "@/types/property"
 
 export function PropertyDetails() {
   const { id } = useParams<{ id: string }>()
-  // const property = propertyDetails.find((p) => p.id === id)
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const { data: property, isLoading, isError } = usePropertyDetail(id)
 
   if (isLoading) {
@@ -20,9 +23,7 @@ export function PropertyDetails() {
   if (isError || !property) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-2">
-        <p className="text-xl font-semibold text-gray-700">
-          Property not found
-        </p>
+        <p className="text-xl font-semibold text-gray-700">Property not found</p>
         <p className="text-sm text-gray-400">No property matches id: {id}</p>
       </div>
     )
@@ -45,7 +46,23 @@ export function PropertyDetails() {
         </div>
 
         <div className="mt-5">
-          <RoomList rooms={property.rooms} />
+          <RoomList
+            rooms={property.rooms}
+            onSelectRoomType={(room) => {
+              setSelectedRoom(room)
+              window.setTimeout(
+                () =>
+                  document
+                    .getElementById("booking-panel")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                0
+              )
+            }}
+          />
+        </div>
+
+        <div id="booking-panel">
+          <BookingPanel propertyId={property.id} roomType={selectedRoom} />
         </div>
       </div>
     </div>

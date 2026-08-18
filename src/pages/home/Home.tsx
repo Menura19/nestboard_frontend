@@ -1,53 +1,104 @@
-//import { useState } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { HeroSection } from "./components/HeroSection"
 import { PropertyList } from "./components/PropertyList"
 import { SearchFilters } from "./components/SearchFilters"
-import type { Property } from "@/types/property"
 import { useProperties } from "@/hooks/useProperties"
-import { useUIStore } from "@/stores/uiStore"
 
 export function Home() {
-  // const [searchQuery, setSearchQuery] = useState("")
-  // const [activeCategory, setActiveCategory] = useState<
-  //   Property["type"] | "All"
-  // >("All")
-  const searchQuery = useUIStore((state) => state.searchQuery)
-  const activeCategory = useUIStore((state) => state.activeCategory)
-  const { data: properties = [], isLoading, isError } = useProperties()
-  const filterBySearch = (property: Property) => {
-    return (
-      searchQuery === "" ||
-      property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      property.location.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  const filterByCategory = (property: Property) => {
-    return activeCategory === "All" || property.type === activeCategory
-  }
+  const {
+    data,
+    isLoading,
+    isError,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useProperties()
 
-  const filteredProperties = properties.filter(
-    (property) => filterBySearch(property) && filterByCategory(property)
+  const properties = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data]
   )
+
+  const total = data?.pages[0]?.meta.total ?? 0
+
+  useEffect(() => {
+    const target = loadMoreRef.current
+
+    if (!target || !hasNextPage) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0]
+
+        if (
+          firstEntry?.isIntersecting &&
+          hasNextPage &&
+          !isFetchingNextPage
+        ) {
+          void fetchNextPage()
+        }
+      },
+      {
+        rootMargin: "200px",
+      }
+    )
+
+    observer.observe(target)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  ])
 
   return (
     <>
       <HeroSection />
       <SearchFilters />
 
-      {/* <SearchFilters
-        searchQuery={searchQuery}
-        activeCategory={activeCategory}
-        onSearchChange={setSearchQuery}
-        onCategoryChange={setActiveCategory}
-      /> */}
+      {isLoading && (
+        <div className="px-8 py-10 text-gray-500">
+          Loading properties...
+        </div>
+      )}
+
       {isError && (
         <div className="px-8 py-10 text-red-400">
           Failed to load properties. Please try again.
         </div>
       )}
+
       {!isLoading && !isError && (
-        <PropertyList properties={filteredProperties} />
+        <>
+          <PropertyList
+            properties={properties}
+            total={total}
+          />
+
+          <div
+            ref={loadMoreRef}
+            className="flex min-h-16 items-center justify-center pb-10"
+          >
+            {isFetchingNextPage && (
+              <p className="text-sm text-gray-500">
+                Loading more properties...
+              </p>
+            )}
+
+            {!hasNextPage && properties.length > 0 && (
+              <p className="text-sm text-gray-400">
+                You have reached the end.
+              </p>
+            )}
+          </div>
+        </>
       )}
     </>
   )
