@@ -1,4 +1,3 @@
-Here’s a polished and more structured version of your README.md with better readability, consistent formatting, and small enhancements:
 
 # NestBoard Frontend
 
@@ -115,3 +114,18 @@ npm start
 - DELETE /properties/:id – Delete a property.
 
 ⚠️ This backend is required to run the frontend application properly.
+
+## Final Project Links
+
+### Project Index
+- Google Doc: https://docs.google.com/document/d/1Z5rIfB03exIOVG7gcX6zl9_BzzQyH-OlXR3JHF-9xxs/edit?usp=sharing
+
+### Repositories
+- Frontend: https://github.com/Menura19/nestboard_frontend
+- Backend: https://github.com/Menura19/nestboard_backend
+- Mobile: https://github.com/Menura19/nestboard_mobile
+
+### Deployed Links
+- Live Frontend: https://nestboard-frontend-eta.vercel.app
+- Live Backend API: https://nestboardbackend-production.up.railway.app
+- Android APK: https://drive.google.com/file/d/1OjZ2Cld0lk7928CwFWfKafJY9LVpRG-a/view?usp=sharing
